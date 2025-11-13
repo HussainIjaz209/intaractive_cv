@@ -354,6 +354,16 @@
                 padding-top: 10px !important;
             }
         }
+
+        @media print {
+            .controls {
+                display: none !important;
+            }
+
+            .add-item-btn {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 
@@ -841,10 +851,10 @@
                 }
             });
 
-            // Show item form when add button is clicked
-            addItemButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const sectionType = this.getAttribute('data-section');
+            // Show item form when add button is clicked (using event delegation)
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('add-item-btn')) {
+                    const sectionType = e.target.getAttribute('data-section');
                     itemSectionSelect.value = sectionType;
                     
                     // Show/hide date field based on section type
@@ -855,7 +865,7 @@
                     }
                     
                     itemForm.classList.add('active');
-                });
+                }
             });
 
             // Add item to section
@@ -1047,6 +1057,15 @@
                     disableHeaderEditing();
                 }
 
+                // Hide controls and buttons before generating PDF
+                const controls = document.querySelector('.controls');
+                const addItemBtns = document.querySelectorAll('.add-item-btn');
+                const controlsDisplay = controls ? controls.style.display : '';
+                const addBtnDisplays = Array.from(addItemBtns).map(btn => btn.style.display);
+
+                if (controls) controls.style.display = 'none';
+                addItemBtns.forEach(btn => btn.style.display = 'none');
+
                 // Ensure structure is preserved before PDF generation
                 preserveSectionStructure();
 
@@ -1060,6 +1079,10 @@
                 };
 
                 html2pdf().set(options).from(element).save().then(() => {
+                    // Restore controls and buttons visibility
+                    if (controls) controls.style.display = controlsDisplay;
+                    addItemBtns.forEach((btn, index) => btn.style.display = addBtnDisplays[index]);
+
                     // Restore editing state if it was enabled
                     if (wasEditing) {
                         cvContent.contentEditable = 'true';
